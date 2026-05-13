@@ -1,116 +1,104 @@
 // WetzelBulk - Full Workout Logger
 const cycle = ['Push', 'Legs', 'Pull', 'Cardio'];
 let currentCycleIndex = 0;
-let currentWorkout = null;
-let workoutHistory = JSON.parse(localStorage.getItem('wetzelbulk_history')) || {};
 
-// Your optimized routine with supersets
 const routine = {
     Push: [
-        { name: "Incline Chest Press", sets: 4, supersetWith: 1 },
+        { name: "Incline Chest Press", sets: 4 },
         { name: "Lateral Raises", sets: 4 },
-        { name: "Flat Chest Press", sets: 3, supersetWith: 3 },
+        { name: "Flat Chest Press", sets: 3 },
         { name: "Military Press", sets: 3 },
-        { name: "Tricep Pushdowns", sets: 3, supersetWith: 5 },
+        { name: "Tricep Pushdowns", sets: 3 },
         { name: "Skull Crushers", sets: 3 }
     ],
     Legs: [
         { name: "Leg Press", sets: 4 },
-        { name: "Romanian Deadlifts (DB)", sets: 3, supersetWith: 2 },
+        { name: "Romanian Deadlifts (DB)", sets: 3 },
         { name: "Calf Raises", sets: 4 },
         { name: "Crunches + Back Extensions", sets: 3 }
     ],
     Pull: [
-        { name: "Lat Pulldowns (wide)", sets: 4, supersetWith: 1 },
+        { name: "Lat Pulldowns (wide)", sets: 4 },
         { name: "Face Pulls", sets: 4 },
-        { name: "Cable Rows", sets: 3, supersetWith: 3 },
+        { name: "Cable Rows", sets: 3 },
         { name: "Dumbbell Shrugs", sets: 3 },
-        { name: "Incline DB Curls", sets: 3, supersetWith: 5 },
+        { name: "Incline DB Curls", sets: 3 },
         { name: "Hammer Curls", sets: 3 }
     ],
     Cardio: [
-        { name: "Incline Treadmill Walk", sets: 1, notes: "350 calories, 10% incline" }
+        { name: "Incline Treadmill Walk (350 cal)", sets: 1 }
     ]
 };
 
-function getNextWorkout() {
-    return cycle[currentCycleIndex];
-}
-
 function startWorkout() {
-    currentWorkout = getNextWorkout();
-    document.getElementById('workout-title').textContent = currentWorkout + " Day";
-    renderExercises();
+    const workout = cycle[currentCycleIndex];
+    document.getElementById('workout-title').textContent = workout + " Day";
+    renderExercises(workout);
 }
 
-function renderExercises() {
+function renderExercises(workoutType) {
     const list = document.getElementById('exercises-list');
     list.innerHTML = '';
-    
-    const exercises = routine[currentWorkout] || [];
-    
-    exercises.forEach((ex, index) => {
+
+    const exercises = routine[workoutType] || [];
+
+    exercises.forEach((ex, exIndex) => {
+        let setsHTML = '';
+        for (let setNum = 1; setNum <= ex.sets; setNum++) {
+            setsHTML += `
+                <div class="set-row" id="set-${exIndex}-${setNum}">
+                    <div>Set ${setNum}</div>
+                    <div>
+                        <button onclick="adjustValue(${exIndex},${setNum}, 'weight', -5)">–</button>
+                        <span id="w-${exIndex}-${setNum}">135</span>
+                        <button onclick="adjustValue(${exIndex},${setNum}, 'weight', 5)">+</button>
+                    </div>
+                    <div>
+                        <button onclick="adjustValue(${exIndex},${setNum}, 'reps', -1)">–</button>
+                        <span id="r-${exIndex}-${setNum}">10</span>
+                        <button onclick="adjustValue(${exIndex},${setNum}, 'reps', 1)">+</button>
+                    </div>
+                    <button onclick="completeSet(${exIndex},${setNum})" style="background:#16a34a;color:white;border:none">Done</button>
+                </div>`;
+        }
+
         const div = document.createElement('div');
         div.className = 'exercise';
         div.innerHTML = `
             <div class="exercise-header">
                 <div class="ex-name">${ex.name}</div>
-                <button class="i-btn" onclick="showFormNotes('${ex.name}')">ℹ</button>
+                <button onclick="showFormNotes('${ex.name}')" style="font-size:22px;background:none;border:none">ℹ</button>
             </div>
-            <div id="sets-${index}"></div>
+            ${setsHTML}
         `;
         list.appendChild(div);
-        renderSets(index, ex);
     });
 }
 
-function renderSets(exIndex, exercise) {
-    const container = document.getElementById(`sets-${exIndex}`);
-    container.innerHTML = '';
-    
-    for (let set = 1; set <= exercise.sets; set++) {
-        const row = document.createElement('div');
-        row.className = 'set-row pending';
-        row.innerHTML = `
-            <div class="set-label">Set ${set}</div>
-            <div><button onclick="adjustWeight(${exIndex},${set}, -5)">–</button> <span id="w-${exIndex}-${set}">135</span> <button onclick="adjustWeight(${exIndex},${set}, 5)">+</button></div>
-            <div><button onclick="adjustReps(${exIndex},${set}, -1)">–</button> <span id="r-${exIndex}-${set}">10</span> <button onclick="adjustReps(${exIndex},${set}, 1)">+</button></div>
-            <button onclick="completeSet(${exIndex},${set})" style="grid-column:3">Done</button>
-        `;
-        container.appendChild(row);
-    }
-}
-
-function adjustWeight(exIndex, set, delta) {
-    const el = document.getElementById(`w-${exIndex}-${set}`);
+function adjustValue(exIndex, setNum, type, delta) {
+    const id = type === 'weight' ? `w-${exIndex}-${setNum}` : `r-${exIndex}-${setNum}`;
+    const el = document.getElementById(id);
     let val = parseInt(el.textContent) || 135;
-    val = Math.max(5, val + delta);
+    val = Math.max(type === 'weight' ? 5 : 1, val + delta);
     el.textContent = val;
 }
 
-function adjustReps(exIndex, set, delta) {
-    const el = document.getElementById(`r-${exIndex}-${set}`);
-    let val = parseInt(el.textContent) || 10;
-    val = Math.max(1, val + delta);
-    el.textContent = val;
+function completeSet(exIndex, setNum) {
+    const row = document.getElementById(`set-${exIndex}-${setNum}`);
+    if (row) row.style.background = '#f0fdf4';
 }
 
-function completeSet(exIndex, set) {
-    const row = document.querySelector(`#sets-${exIndex} .set-row:nth-child(${set})`);
-    if (row) row.classList.add('completed');
-}
-
-function showFormNotes(exerciseName) {
-    alert(`Form notes for ${exerciseName}:\n\n• Full range of motion\n• Controlled eccentric (3 sec down)\n• Squeeze at the top\n\n(Add your personal notes later)`);
+function showFormNotes(name) {
+    alert(`Form cues for ${name}:\n\n• Full range of motion\n• Controlled 2-3 second lowering\n• Strong mind-muscle connection\n\nYou can add personal notes later.`);
 }
 
 function finishWorkout() {
-    if (confirm("Finish this workout and save?")) {
-        alert("Workout saved! Great work 💪\n\nData is stored locally.");
-        // Advance cycle
+    if (confirm("Save this workout and move to next day?")) {
         currentCycleIndex = (currentCycleIndex + 1) % cycle.length;
+        alert("✅ Workout saved! Great session 💪");
+        startWorkout(); // Load next day
     }
 }
 
-// Initialize
+// Start the app
 startWorkout();
