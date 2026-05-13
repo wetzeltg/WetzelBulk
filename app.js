@@ -1,17 +1,33 @@
-// WetzelBulk
+// WetzelBulk - With Supersets
 const cycle = ['Push', 'Legs', 'Pull', 'Cardio'];
 let currentCycleIndex = 0;
 
 const routine = {
-    Push: [{ name: "Incline Chest Press", sets: 4 }, { name: "Lateral Raises", sets: 4 },
-           { name: "Flat Chest Press", sets: 3 }, { name: "Military Press", sets: 3 },
-           { name: "Tricep Pushdowns", sets: 3 }, { name: "Skull Crushers", sets: 3 }],
-    Legs: [{ name: "Leg Press", sets: 4 }, { name: "Romanian Deadlifts (DB)", sets: 3 },
-           { name: "Calf Raises", sets: 4 }, { name: "Crunches + Back Extensions", sets: 3 }],
-    Pull: [{ name: "Lat Pulldowns (wide)", sets: 4 }, { name: "Face Pulls", sets: 4 },
-           { name: "Cable Rows", sets: 3 }, { name: "Dumbbell Shrugs", sets: 3 },
-           { name: "Incline DB Curls", sets: 3 }, { name: "Hammer Curls", sets: 3 }],
-    Cardio: [{ name: "Incline Treadmill Walk", sets: 1 }]
+    Push: [
+        { name: "Incline Chest Press", sets: 4, superset: "Lateral Raises" },
+        { name: "Lateral Raises", sets: 4 },
+        { name: "Flat Chest Press", sets: 3, superset: "Military Press" },
+        { name: "Military Press", sets: 3 },
+        { name: "Tricep Pushdowns", sets: 3, superset: "Skull Crushers" },
+        { name: "Skull Crushers", sets: 3 }
+    ],
+    Legs: [
+        { name: "Leg Press", sets: 4 },
+        { name: "Romanian Deadlifts (DB)", sets: 3, superset: "Calf Raises" },
+        { name: "Calf Raises", sets: 4 },
+        { name: "Crunches + Back Extensions", sets: 3 }
+    ],
+    Pull: [
+        { name: "Lat Pulldowns (wide)", sets: 4, superset: "Face Pulls" },
+        { name: "Face Pulls", sets: 4 },
+        { name: "Cable Rows", sets: 3, superset: "Dumbbell Shrugs" },
+        { name: "Dumbbell Shrugs", sets: 3 },
+        { name: "Incline DB Curls", sets: 3, superset: "Hammer Curls" },
+        { name: "Hammer Curls", sets: 3 }
+    ],
+    Cardio: [
+        { name: "Incline Treadmill Walk", sets: 1 }
+    ]
 };
 
 function startWorkout() {
@@ -24,7 +40,9 @@ function renderExercises(workoutType) {
     const list = document.getElementById('exercises-list');
     list.innerHTML = '';
 
-    routine[workoutType].forEach((ex, exIndex) => {
+    const exercises = routine[workoutType] || [];
+
+    exercises.forEach((ex, exIndex) => {
         let setsHTML = '';
         for (let s = 1; s <= ex.sets; s++) {
             setsHTML += `
@@ -44,6 +62,9 @@ function renderExercises(workoutType) {
                 </div>`;
         }
 
+        const isSupersetPair = ex.superset ? true : false;
+        const supersetLabel = ex.superset ? `<div style="font-size:13px;color:#16a34a;margin-top:4px;">🔄 Superset with ${ex.superset}</div>` : '';
+
         const div = document.createElement('div');
         div.className = 'exercise';
         div.innerHTML = `
@@ -51,6 +72,7 @@ function renderExercises(workoutType) {
                 <div class="ex-name">${ex.name}</div>
                 <button class="info-btn" onclick="showFormNotes('${ex.name}')">ⓘ</button>
             </div>
+            ${supersetLabel}
             ${setsHTML}
         `;
         list.appendChild(div);
@@ -60,7 +82,8 @@ function renderExercises(workoutType) {
 function adjust(exIndex, setNum, type, delta) {
     const prefix = type === 'w' ? 'w' : 'r';
     const el = document.getElementById(`${prefix}-${exIndex}-${setNum}`);
-    let val = parseInt(el.textContent) || 135;
+    if (!el) return;
+    let val = parseInt(el.textContent) || (type === 'w' ? 135 : 10);
     val = Math.max(type === 'w' ? 5 : 1, val + delta);
     el.textContent = val;
 }
@@ -71,7 +94,7 @@ function completeSet(exIndex, setNum) {
 }
 
 function showFormNotes(name) {
-    alert(`Form notes for ${name}:\n\n• Full range of motion\n• Slow controlled lowering\n• Strong squeeze at top`);
+    alert(`Form notes for ${name}:\n\n• Full range of motion\n• Controlled lowering\n• Strong squeeze`);
 }
 
 function finishWorkout() {
