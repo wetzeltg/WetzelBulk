@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WetzelBulk</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --accent: #4ade80;
+        }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 0; padding: 0; 
+            background: var(--bg); 
+            color: #eee; 
+            min-height: 100vh;
+        }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        h1 { text-align: center; margin: 20px 0; color: var(--accent); }
+        .workout-type { 
+            font-size: 28px; 
+            text-align: center; 
+            margin: 30px 0; 
+            font-weight: bold; 
+        }
+        button { 
+            padding: 14px 20px; 
+            font-size: 18px; 
+            margin: 10px 0; 
+            width: 100%; 
+            border-radius: 12px; 
+            border: none;
+            background: #333;
+            color: white;
+        }
+        button.primary { background: var(--accent); color: black; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WetzelBulk</h1>
+        
+        <div id="home-screen">
+            <div class="workout-type" id="today-workout">Loading...</div>
+            <button onclick="startWorkout()" class="primary">Start Today's Workout</button>
+            <button onclick="changeDay()">Change Day / Override</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
