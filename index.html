@@ -42,7 +42,7 @@
             font-size: 26px;
             font-weight: 600;
             text-align: center;
-            margin: 10px 0 20px;
+            margin: 20px 0;
             color: var(--indigo);
         }
         .exercise {
@@ -61,45 +61,36 @@
         .ex-name { font-weight: 600; font-size: 17px; }
         .set-row {
             display: grid;
-            grid-template-columns: 80px 80px 1fr;
+            grid-template-columns: 70px 90px 90px 60px;
             gap: 8px;
             align-items: center;
-            margin: 8px 0;
-            padding: 8px;
+            margin: 6px 0;
+            padding: 10px;
             background: #f8fafc;
             border-radius: 8px;
         }
-        .set-label { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--muted); }
         button {
             padding: 8px 12px;
-            font-size: 16px;
+            font-size: 15px;
             border: 1px solid var(--border);
             background: white;
             border-radius: 6px;
             cursor: pointer;
         }
         .btn-plus { background: var(--green); color: white; border: none; }
-        .btn-minus { background: #f1f5f9; }
+        .btn-minus { background: #fee2e2; }
         .completed { background: #f0fdf4 !important; border-left: 4px solid var(--green); }
-        .pending { opacity: 0.7; }
-        .i-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--indigo);
-        }
     </style>
 </head>
 <body>
     <header>
         <div class="logo">Wetzel<span>Bulk</span></div>
-        <button onclick="finishWorkout()" style="background:var(--indigo);color:white;border:none;padding:8px 16px;border-radius:8px;">Finish Workout</button>
     </header>
 
     <div id="workout-screen">
         <div class="workout-type" id="workout-title">Push Day</div>
         <div id="exercises-list"></div>
+        <button onclick="finishWorkout()" style="margin-top:30px;background:var(--indigo);color:white;border:none;padding:16px;border-radius:12px;width:100%;font-size:18px;">Finish Workout</button>
     </div>
 
     <script src="app.js"></script>
