@@ -1,33 +1,31 @@
-// WetzelBulk - With Supersets
+// WetzelBulk - Improved Supersets + Compact Layout
 const cycle = ['Push', 'Legs', 'Pull', 'Cardio'];
 let currentCycleIndex = 0;
 
 const routine = {
     Push: [
-        { name: "Incline Chest Press", sets: 4, superset: "Lateral Raises" },
+        { name: "Incline Chest Press", sets: 4, pair: "Lateral Raises" },
         { name: "Lateral Raises", sets: 4 },
-        { name: "Flat Chest Press", sets: 3, superset: "Military Press" },
+        { name: "Flat Chest Press", sets: 3, pair: "Military Press" },
         { name: "Military Press", sets: 3 },
-        { name: "Tricep Pushdowns", sets: 3, superset: "Skull Crushers" },
+        { name: "Tricep Pushdowns", sets: 3, pair: "Skull Crushers" },
         { name: "Skull Crushers", sets: 3 }
     ],
     Legs: [
         { name: "Leg Press", sets: 4 },
-        { name: "Romanian Deadlifts (DB)", sets: 3, superset: "Calf Raises" },
+        { name: "Romanian Deadlifts (DB)", sets: 3, pair: "Calf Raises" },
         { name: "Calf Raises", sets: 4 },
         { name: "Crunches + Back Extensions", sets: 3 }
     ],
     Pull: [
-        { name: "Lat Pulldowns (wide)", sets: 4, superset: "Face Pulls" },
+        { name: "Lat Pulldowns (wide)", sets: 4, pair: "Face Pulls" },
         { name: "Face Pulls", sets: 4 },
-        { name: "Cable Rows", sets: 3, superset: "Dumbbell Shrugs" },
+        { name: "Cable Rows", sets: 3, pair: "Dumbbell Shrugs" },
         { name: "Dumbbell Shrugs", sets: 3 },
-        { name: "Incline DB Curls", sets: 3, superset: "Hammer Curls" },
+        { name: "Incline DB Curls", sets: 3, pair: "Hammer Curls" },
         { name: "Hammer Curls", sets: 3 }
     ],
-    Cardio: [
-        { name: "Incline Treadmill Walk", sets: 1 }
-    ]
+    Cardio: [{ name: "Incline Treadmill Walk", sets: 1 }]
 };
 
 function startWorkout() {
@@ -47,23 +45,22 @@ function renderExercises(workoutType) {
         for (let s = 1; s <= ex.sets; s++) {
             setsHTML += `
                 <div class="set-row" id="set-${exIndex}-${s}">
-                    <div style="font-weight:500;">Set ${s}</div>
-                    <div style="text-align:center">
-                        <button onclick="adjust(${exIndex},${s},'w',-5)" class="btn-minus">–</button>
-                        <span id="w-${exIndex}-${s}" style="display:inline-block;width:50px;font-family:monospace;">135</span>
-                        <button onclick="adjust(${exIndex},${s},'w',5)" class="btn-plus">+</button>
+                    <div style="font-weight:500; min-width:45px;">Set ${s}</div>
+                    <div style="display:flex; gap:4px; align-items:center; justify-content:center;">
+                        <button onclick="adjust(${exIndex},${s},'w',-5)" style="width:36px;">–</button>
+                        <span id="w-${exIndex}-${s}" style="width:48px; text-align:center; font-family:monospace; font-size:16px;">135</span>
+                        <button onclick="adjust(${exIndex},${s},'w',5)" style="width:36px;">+</button>
                     </div>
-                    <div style="text-align:center">
-                        <button onclick="adjust(${exIndex},${s},'r',-1)" class="btn-minus">–</button>
-                        <span id="r-${exIndex}-${s}" style="display:inline-block;width:40px;font-family:monospace;">10</span>
-                        <button onclick="adjust(${exIndex},${s},'r',1)" class="btn-plus">+</button>
+                    <div style="display:flex; gap:4px; align-items:center; justify-content:center;">
+                        <button onclick="adjust(${exIndex},${s},'r',-1)" style="width:36px;">–</button>
+                        <span id="r-${exIndex}-${s}" style="width:40px; text-align:center; font-family:monospace; font-size:16px;">10</span>
+                        <button onclick="adjust(${exIndex},${s},'r',1)" style="width:36px;">+</button>
                     </div>
-                    <button onclick="completeSet(${exIndex},${s})" style="background:#16a34a;color:white;border:none">Done</button>
+                    <button onclick="completeSet(${exIndex},${s})" style="background:#16a34a;color:white;border:none;padding:8px 12px;">Done</button>
                 </div>`;
         }
 
-        const isSupersetPair = ex.superset ? true : false;
-        const supersetLabel = ex.superset ? `<div style="font-size:13px;color:#16a34a;margin-top:4px;">🔄 Superset with ${ex.superset}</div>` : '';
+        const pairText = ex.pair ? `<div style="color:#16a34a; font-size:13px; margin:6px 0 8px;">🔄 Superset with <strong>${ex.pair}</strong></div>` : '';
 
         const div = document.createElement('div');
         div.className = 'exercise';
@@ -72,7 +69,7 @@ function renderExercises(workoutType) {
                 <div class="ex-name">${ex.name}</div>
                 <button class="info-btn" onclick="showFormNotes('${ex.name}')">ⓘ</button>
             </div>
-            ${supersetLabel}
+            ${pairText}
             ${setsHTML}
         `;
         list.appendChild(div);
@@ -94,15 +91,15 @@ function completeSet(exIndex, setNum) {
 }
 
 function showFormNotes(name) {
-    alert(`Form notes for ${name}:\n\n• Full range of motion\n• Controlled lowering\n• Strong squeeze`);
+    alert(`Form notes for ${name}:\n\n• Full range of motion\n• Controlled lowering (2-3 sec)\n• Strong squeeze at the top`);
 }
 
 function finishWorkout() {
-    if (confirm("Finish workout and go to next day?")) {
+    if (confirm("Finish workout and move to next day?")) {
         currentCycleIndex = (currentCycleIndex + 1) % cycle.length;
         startWorkout();
     }
 }
 
-// Start
+// Start the app
 startWorkout();
