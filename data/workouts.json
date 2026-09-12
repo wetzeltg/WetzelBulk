@@ -1,8 +1,170 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-09-11T05:50:31Z",
-  "totalSessions": 78,
+  "exportedAt": "2026-09-12T07:21:27Z",
+  "totalSessions": 79,
   "sessions": [
+    {
+      "sessionId": 81,
+      "dateString": "2026-09-12",
+      "dayName": "PUSH DAY",
+      "startTime": 1789209519352,
+      "endTime": 1789212087728,
+      "bodyWeight": 159.70000000000005,
+      "sets": [
+        {
+          "logId": 1212,
+          "exerciseBlockTitle": "Incline Press (4 Sets)",
+          "exerciseLabel": "Inc. Press",
+          "setNum": 1,
+          "weightAchieved": 11,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1213,
+          "exerciseBlockTitle": "Incline Press (4 Sets)",
+          "exerciseLabel": "Inc. Press",
+          "setNum": 2,
+          "weightAchieved": 11,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1214,
+          "exerciseBlockTitle": "Incline Press (4 Sets)",
+          "exerciseLabel": "Inc. Press",
+          "setNum": 3,
+          "weightAchieved": 11,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1215,
+          "exerciseBlockTitle": "Incline Press (4 Sets)",
+          "exerciseLabel": "Inc. Press",
+          "setNum": 4,
+          "weightAchieved": 11,
+          "repsAchieved": 11
+        },
+        {
+          "logId": 1216,
+          "exerciseBlockTitle": "Flat Press (3 Sets)",
+          "exerciseLabel": "Flat Press",
+          "setNum": 1,
+          "weightAchieved": 50,
+          "repsAchieved": 10
+        },
+        {
+          "logId": 1217,
+          "exerciseBlockTitle": "Flat Press (3 Sets)",
+          "exerciseLabel": "Flat Press",
+          "setNum": 2,
+          "weightAchieved": 50,
+          "repsAchieved": 10
+        },
+        {
+          "logId": 1218,
+          "exerciseBlockTitle": "Flat Press (3 Sets)",
+          "exerciseLabel": "Flat Press",
+          "setNum": 3,
+          "weightAchieved": 50,
+          "repsAchieved": 9
+        },
+        {
+          "logId": 1219,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "DB Fly",
+          "setNum": 1,
+          "weightAchieved": 30,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1220,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "Lat. Raise",
+          "setNum": 1,
+          "weightAchieved": 25,
+          "repsAchieved": 13
+        },
+        {
+          "logId": 1221,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "DB Fly",
+          "setNum": 2,
+          "weightAchieved": 30,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1222,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "Lat. Raise",
+          "setNum": 2,
+          "weightAchieved": 25,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1223,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "DB Fly",
+          "setNum": 3,
+          "weightAchieved": 30,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1224,
+          "exerciseBlockTitle": "Superset: DB Fly \/ DB Lateral Raise",
+          "exerciseLabel": "Lat. Raise",
+          "setNum": 3,
+          "weightAchieved": 20,
+          "repsAchieved": 13
+        },
+        {
+          "logId": 1225,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Rope Push",
+          "setNum": 1,
+          "weightAchieved": 5,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1226,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Skull Crusher",
+          "setNum": 1,
+          "weightAchieved": 25,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1227,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Rope Push",
+          "setNum": 2,
+          "weightAchieved": 5,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1228,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Skull Crusher",
+          "setNum": 2,
+          "weightAchieved": 25,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1229,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Rope Push",
+          "setNum": 3,
+          "weightAchieved": 5,
+          "repsAchieved": 8
+        },
+        {
+          "logId": 1230,
+          "exerciseBlockTitle": "Superset: Rope Pushdown \/ Skull Crusher",
+          "exerciseLabel": "Skull Crusher",
+          "setNum": 3,
+          "weightAchieved": 25,
+          "repsAchieved": 8
+        }
+      ]
+    },
     {
       "sessionId": 80,
       "dateString": "2026-09-11",
