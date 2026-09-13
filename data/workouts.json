@@ -1,8 +1,130 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-09-12T07:21:27Z",
-  "totalSessions": 79,
+  "exportedAt": "2026-09-13T07:12:09Z",
+  "totalSessions": 80,
   "sessions": [
+    {
+      "sessionId": 82,
+      "dateString": "2026-09-13",
+      "dayName": "LEGS DAY",
+      "startTime": 1789296036487,
+      "endTime": 1789297928990,
+      "bodyWeight": 161.29999999999995,
+      "sets": [
+        {
+          "logId": 1231,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 1,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1232,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 2,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1233,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 3,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1234,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 4,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1235,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 1,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1236,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 2,
+          "weightAchieved": 50,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1237,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 3,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1238,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 1,
+          "weightAchieved": 17,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1239,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 2,
+          "weightAchieved": 17,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1240,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 3,
+          "weightAchieved": 17,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1241,
+          "exerciseBlockTitle": "Superset: Back Extension \/ Crunch",
+          "exerciseLabel": "Back Ext.",
+          "setNum": 1,
+          "weightAchieved": 15,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1242,
+          "exerciseBlockTitle": "Superset: Back Extension \/ Crunch",
+          "exerciseLabel": "Crunch",
+          "setNum": 1,
+          "weightAchieved": 7,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1243,
+          "exerciseBlockTitle": "Superset: Back Extension \/ Crunch",
+          "exerciseLabel": "Back Ext.",
+          "setNum": 2,
+          "weightAchieved": 15,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1244,
+          "exerciseBlockTitle": "Superset: Back Extension \/ Crunch",
+          "exerciseLabel": "Crunch",
+          "setNum": 2,
+          "weightAchieved": 7,
+          "repsAchieved": 15
+        }
+      ]
+    },
     {
       "sessionId": 81,
       "dateString": "2026-09-12",
