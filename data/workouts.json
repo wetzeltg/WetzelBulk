@@ -1,8 +1,178 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-10-14T05:42:33Z",
-  "totalSessions": 97,
+  "exportedAt": "2026-10-15T05:57:53Z",
+  "totalSessions": 98,
   "sessions": [
+    {
+      "sessionId": 100,
+      "dateString": "2026-10-15",
+      "dayName": "PULL DAY",
+      "startTime": 1792055631118,
+      "endTime": 1792058273754,
+      "bodyWeight": 159.6,
+      "sets": [
+        {
+          "logId": 1489,
+          "exerciseBlockTitle": "Lat Pulldown (4 Sets)",
+          "exerciseLabel": "Lat Pull",
+          "setNum": 1,
+          "weightAchieved": 14,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1490,
+          "exerciseBlockTitle": "Lat Pulldown (4 Sets)",
+          "exerciseLabel": "Lat Pull",
+          "setNum": 2,
+          "weightAchieved": 14,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1491,
+          "exerciseBlockTitle": "Lat Pulldown (4 Sets)",
+          "exerciseLabel": "Lat Pull",
+          "setNum": 3,
+          "weightAchieved": 14,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1492,
+          "exerciseBlockTitle": "Lat Pulldown (4 Sets)",
+          "exerciseLabel": "Lat Pull",
+          "setNum": 4,
+          "weightAchieved": 14,
+          "repsAchieved": 11
+        },
+        {
+          "logId": 1493,
+          "exerciseBlockTitle": "Seated Cable Row - V-Grip (4 Sets)",
+          "exerciseLabel": "Cable Row",
+          "setNum": 1,
+          "weightAchieved": 13,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1494,
+          "exerciseBlockTitle": "Seated Cable Row - V-Grip (4 Sets)",
+          "exerciseLabel": "Cable Row",
+          "setNum": 2,
+          "weightAchieved": 13,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1495,
+          "exerciseBlockTitle": "Seated Cable Row - V-Grip (4 Sets)",
+          "exerciseLabel": "Cable Row",
+          "setNum": 3,
+          "weightAchieved": 13,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1496,
+          "exerciseBlockTitle": "Seated Cable Row - V-Grip (4 Sets)",
+          "exerciseLabel": "Cable Row",
+          "setNum": 4,
+          "weightAchieved": 13,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1497,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Pulldown",
+          "setNum": 1,
+          "weightAchieved": 5,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1498,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Face Pull",
+          "setNum": 1,
+          "weightAchieved": 6,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1499,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Pulldown",
+          "setNum": 2,
+          "weightAchieved": 5,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1500,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Face Pull",
+          "setNum": 2,
+          "weightAchieved": 6,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1501,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Pulldown",
+          "setNum": 3,
+          "weightAchieved": 5,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1502,
+          "exerciseBlockTitle": "Superset: Straight-Arm Pulldown \/ Face Pull",
+          "exerciseLabel": "Face Pull",
+          "setNum": 3,
+          "weightAchieved": 6,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1503,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Inc. Curl",
+          "setNum": 1,
+          "weightAchieved": 25,
+          "repsAchieved": 15
+        },
+        {
+          "logId": 1504,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Hammer",
+          "setNum": 1,
+          "weightAchieved": 30,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1505,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Inc. Curl",
+          "setNum": 2,
+          "weightAchieved": 25,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1506,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Hammer",
+          "setNum": 2,
+          "weightAchieved": 30,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1507,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Inc. Curl",
+          "setNum": 3,
+          "weightAchieved": 25,
+          "repsAchieved": 9
+        },
+        {
+          "logId": 1508,
+          "exerciseBlockTitle": "Superset: Incline DB Curl \/ Hammer Curl",
+          "exerciseLabel": "Hammer",
+          "setNum": 3,
+          "weightAchieved": 30,
+          "repsAchieved": 12
+        }
+      ]
+    },
     {
       "sessionId": 99,
       "dateString": "2026-10-14",
