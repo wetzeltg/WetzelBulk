@@ -1,8 +1,98 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-11-09T05:56:00Z",
-  "totalSessions": 108,
+  "exportedAt": "2026-11-10T05:44:28Z",
+  "totalSessions": 109,
   "sessions": [
+    {
+      "sessionId": 111,
+      "dateString": "2026-11-10",
+      "dayName": "LEGS DAY",
+      "startTime": 1794305850310,
+      "endTime": 1794307468679,
+      "bodyWeight": 162.6,
+      "sets": [
+        {
+          "logId": 1587,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 1,
+          "weightAchieved": 16,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1588,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 2,
+          "weightAchieved": 16,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1589,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 3,
+          "weightAchieved": 16,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1590,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 4,
+          "weightAchieved": 16,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1591,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 1,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1592,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 2,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1593,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 3,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1594,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 1,
+          "weightAchieved": 16,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1595,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 2,
+          "weightAchieved": 16,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1596,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 3,
+          "weightAchieved": 16,
+          "repsAchieved": 18
+        }
+      ]
+    },
     {
       "sessionId": 110,
       "dateString": "2026-11-09",
@@ -13822,10 +13912,6 @@
       "notesText": "notch 11\ncalves: aim for full extension, consider dropping weight and focus on full extension with hold to work top of calf\nfocus more on extension \n\nrdl, slow 3s down, 1s up"
     },
     {
-      "blockTitle": "Leg Press Calf Raise (3 Sets)",
-      "notesText": "leg press notch 8 for quads.\n\ncalf notch 11"
-    },
-    {
       "blockTitle": "Superset: Back Extension \/ Crunch",
       "notesText": "ab notch 3\nback notch 1\ncrunch, keep butt in seat"
     },
@@ -13848,6 +13934,10 @@
     {
       "blockTitle": "Incline Press (4 Sets)",
       "notesText": "incline on machine, notch 4"
+    },
+    {
+      "blockTitle": "Leg Press Calf Raise (3 Sets)",
+      "notesText": "leg press notch 8 for quads.\n\ncalf notch 11"
     }
   ]
 }
