@@ -1,8 +1,98 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-11-18T05:59:18Z",
-  "totalSessions": 116,
+  "exportedAt": "2026-11-19T05:44:02Z",
+  "totalSessions": 117,
   "sessions": [
+    {
+      "sessionId": 119,
+      "dateString": "2026-11-19",
+      "dayName": "LEGS DAY",
+      "startTime": 1795083462967,
+      "endTime": 1795085042057,
+      "bodyWeight": 159.7,
+      "sets": [
+        {
+          "logId": 1686,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 1,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1687,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 2,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1688,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 3,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1689,
+          "exerciseBlockTitle": "Leg Press (4 Sets)",
+          "exerciseLabel": "Leg Press",
+          "setNum": 4,
+          "weightAchieved": 17,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1690,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 1,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1691,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 2,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1692,
+          "exerciseBlockTitle": "Romanian Dead Lift (3 Sets)",
+          "exerciseLabel": "RDL",
+          "setNum": 3,
+          "weightAchieved": 50,
+          "repsAchieved": 12
+        },
+        {
+          "logId": 1693,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 1,
+          "weightAchieved": 17,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1694,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 2,
+          "weightAchieved": 17,
+          "repsAchieved": 20
+        },
+        {
+          "logId": 1695,
+          "exerciseBlockTitle": "Leg Press Calf Raise (3 Sets)",
+          "exerciseLabel": "Calf Raise",
+          "setNum": 3,
+          "weightAchieved": 17,
+          "repsAchieved": 15
+        }
+      ]
+    },
     {
       "sessionId": 118,
       "dateString": "2026-11-18",
