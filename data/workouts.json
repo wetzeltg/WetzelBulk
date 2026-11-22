@@ -1,8 +1,26 @@
 {
   "exportVersion": 1,
-  "exportedAt": "2026-11-21T06:31:38Z",
-  "totalSessions": 118,
+  "exportedAt": "2026-11-22T07:30:32Z",
+  "totalSessions": 119,
   "sessions": [
+    {
+      "sessionId": 121,
+      "dateString": "2026-11-22",
+      "dayName": "CARDIO DAY",
+      "startTime": 1795350630642,
+      "endTime": 1795350632397,
+      "bodyWeight": 159.7,
+      "sets": [
+        {
+          "logId": 1716,
+          "exerciseBlockTitle": "Treadmill Cardio",
+          "exerciseLabel": "Completed Treadmill Session",
+          "setNum": 1,
+          "weightAchieved": 0,
+          "repsAchieved": 0
+        }
+      ]
+    },
     {
       "sessionId": 120,
       "dateString": "2026-11-21",
