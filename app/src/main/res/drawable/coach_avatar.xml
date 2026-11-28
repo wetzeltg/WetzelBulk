@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Illustrated personal-trainer avatar (original artwork, not a real person). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background -->
+    <path android:fillColor="#FDE7F1"
+        android:pathData="M54,0 A54,54 0 1,1 53.99,0 Z" />
+
+    <!-- High ponytail (behind head) -->
+    <path android:fillColor="#5A3420"
+        android:pathData="M66,24 C84,16 98,30 94,50 C92,62 86,70 80,74 C84,62 84,50 78,40 C75,34 71,29 66,24 Z" />
+
+    <!-- Shoulders / sports top -->
+    <path android:fillColor="#EC4899"
+        android:pathData="M18,108 C18,90 32,80 54,80 C76,80 90,90 90,108 Z" />
+    <!-- Neckline (skin) -->
+    <path android:fillColor="#F3C7A6"
+        android:pathData="M42,80 C44,92 64,92 66,80 Z" />
+    <!-- Top straps accent -->
+    <path android:fillColor="#BE185D"
+        android:pathData="M36,83 L42,80 L46,92 L40,94 Z M72,83 L66,80 L62,92 L68,94 Z" />
+
+    <!-- Neck -->
+    <path android:fillColor="#E8B48F"
+        android:pathData="M47,62 L61,62 L61,82 C58,85 50,85 47,82 Z" />
+
+    <!-- Face -->
+    <path android:fillColor="#F3C7A6"
+        android:pathData="M35,47 A19,20 0 1,1 73,47 A19,20 0 1,1 35,47 Z" />
+
+    <!-- Hair (top + side sweep) -->
+    <path android:fillColor="#5A3420"
+        android:pathData="M34,48 C32,30 42,22 55,22 C68,22 76,30 74,46 C71,38 66,33 58,32 C52,36 44,38 38,40 C36,42 35,45 34,48 Z" />
+
+    <!-- Headband -->
+    <path android:fillColor="#4F46E5"
+        android:pathData="M35,40 C45,31 63,30 73,38 L72,43 C62,35 46,36 36,45 Z" />
+
+    <!-- Eyes -->
+    <path android:fillColor="#2D1B12"
+        android:pathData="M44.5,49 A2.5,2.8 0 1,1 49.5,49 A2.5,2.8 0 1,1 44.5,49 Z" />
+    <path android:fillColor="#2D1B12"
+        android:pathData="M58.5,49 A2.5,2.8 0 1,1 63.5,49 A2.5,2.8 0 1,1 58.5,49 Z" />
+    <!-- Lashes -->
+    <path android:strokeColor="#2D1B12" android:strokeWidth="1.2" android:strokeLineCap="round"
+        android:pathData="M44,46.5 L42.5,45.5 M64,46.5 L65.5,45.5" />
+
+    <!-- Brows -->
+    <path android:strokeColor="#5A3420" android:strokeWidth="1.6" android:strokeLineCap="round"
+        android:pathData="M43,43.5 Q47,41.5 50.5,43 M57.5,43 Q61,41.5 65,43.5" />
+
+    <!-- Cheeks -->
+    <path android:fillColor="#F9A8C9" android:fillAlpha="0.7"
+        android:pathData="M40,55 A3,2.2 0 1,1 46,55 A3,2.2 0 1,1 40,55 Z" />
+    <path android:fillColor="#F9A8C9" android:fillAlpha="0.7"
+        android:pathData="M62,55 A3,2.2 0 1,1 68,55 A3,2.2 0 1,1 62,55 Z" />
+
+    <!-- Smile -->
+    <path android:fillColor="#C2410C" android:fillAlpha="0.85"
+        android:pathData="M48,57 Q54,64 60,57 Q54,60 48,57 Z" />
+
+    <!-- Whistle cord -->
+    <path android:strokeColor="#4F46E5" android:strokeWidth="1.4"
+        android:pathData="M44,84 Q54,100 64,84" />
+    <path android:fillColor="#9CA3AF"
+        android:pathData="M51,96 L57,96 L57,100 L51,100 Z" />
+</vector>

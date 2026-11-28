@@ -3,7 +3,7 @@ A high-performance, precision-engineered Android workout tracking application bu
 
 ---
 
-## 🚀 Core Architecture & Features (v2.0)
+## 🚀 Core Architecture & Features (v2.1)
 
 ### 1. Body Weight (removed in v2.0)
 Body weight is no longer logged in the app; it's tracked in `food-log/weight-calories.csv`. The `bodyWeight` column and all past values remain in the database and `workouts.json` (new sessions store `0.0` = not recorded).
@@ -76,7 +76,7 @@ Engineered around specific compound movements, targeted rep ranges, and rest int
 
 ## 🗄️ Database Architecture Schema
 
-* **`workout_sessions`**: Logs unique tracking IDs, ISO date strings, day names, start/end timestamps, and `bodyWeight` (Double; historical only since v2.0, `0.0` = not recorded).
+* **`workout_sessions`**: Logs unique tracking IDs, ISO date strings, day names, start/end timestamps, `bodyWeight` (Double; historical only since v2.0, `0.0` = not recorded), and (since v2.1, schema version 4) `coachNoteId`, the trainer note that was current when the workout was finished (`NULL` = none / before v2.1).
 * **`set_logs`**: Captures session-relational data payloads mapping exercise block titles, labels, set numbers, weight achieved, reps achieved, and (since v2.0, schema version 3) the intended `restSeconds` (`-1` = logged before rest was recorded).
 * **`exercise_notes`**: High-availability text database block mapping machine notch settings, cues, and hyperlinked media assets directly onto exercise titles.
 
@@ -87,19 +87,16 @@ Ideas logged for review. Nothing here is implemented until we decide which items
 
 > **Data protection (applies to every item):** the months of history in this repo — `data/` (workout SQLite + `workouts.json`) and `food-log/` (food logs, `weight-calories.csv`) — must never be deleted or rewritten. Changes are additive only. On-phone app data is expendable.
 
-### P3. Personal Trainer Notes from Claude (still in backlog)
-A Claude chat or Claude Agent analyzes results and leaves a note for a specific upcoming workout (e.g. "Move the incline press up one plate"); the app shows it.
-- **Source of truth:** a file in this GitHub repo that Claude writes to and the app reads (e.g. `coach/notes.json`). Append-only: Claude adds new notes and never edits or deletes old ones, so the full note history is kept.
-- **Targeting by workout type, never by date:** each note names one of `PUSH`, `LEGS`, `PULL`, `CARDIO` and gets a timestamp from when Claude wrote it.
-- **Notes are never dismissed.** The most recent note for a workout type stays the "current" note until Claude writes a newer one for that type.
-- **Trainer icon (always on screen):**
-  - **New-note state:** when there's a note for today's workout type that I haven't opened yet, the icon looks different (attention state) so I notice it.
-  - **First tap:** shows the note and the icon goes back to its normal state for good (until another new note arrives for that type). "Seen" is tracked on the phone.
-  - **Later taps:** always show the most recent note for that workout type.
-  - **No new note:** the icon stays normal, and tapping it still shows the most recent note for that workout type.
-- **History (`⏮ Older`):** the icon shows the note of record for that past workout: the latest note for that workout type that existed when the workout was done. The note ID should be saved with each finished session so this stays exact.
-- **Fetching:** the app checks GitHub for new notes when it opens (signal at the gym is reliable). If offline, it uses the last notes it downloaded.
-- Avatar: an illustrated female personal-trainer character (not a real person's photo).
+_No open items._
+
+---
+
+## ✅ Completed in v2.1
+1. **P3 – Personal Trainer Notes from Claude:** Claude appends notes to [`coach/notes.json`](coach/notes.json) on `main` (format and rules for Claude in [`coach/README.md`](coach/README.md)). Each note targets a workout type (`PUSH` / `LEGS` / `PULL` / `CARDIO`), never a date, and notes are never dismissed or deleted.
+   - **Trainer icon** next to the LIVE TARGET / history label. **New note** for today's workout → pulsing pink ring + red `!` badge. First tap opens it and the icon returns to normal (seen notes tracked on the phone). Later taps always show the newest note for that workout type. No note yet → dimmed icon.
+   - **History (`⏮ Older`):** shows the note of record for that workout. Finished workouts save the current note's id (`workout_sessions.coachNoteId`, DB migration 3→4); older workouts use the latest note for that type created before the workout ended.
+   - **Fetching:** the app downloads `coach/notes.json` from GitHub whenever it opens or returns to the foreground; offline it uses the last downloaded copy.
+   - `workouts.json` sessions include `coachNoteId` when set.
 
 ---
 

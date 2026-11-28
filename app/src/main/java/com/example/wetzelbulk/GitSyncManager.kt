@@ -212,6 +212,29 @@ object GitSyncManager {
         }
     }
 
+    /** Downloads a text file from the configured repo/branch. Used for coach/notes.json. Read-only. */
+    suspend fun fetchTextFile(context: Context, path: String): Result<String> = withContext(Dispatchers.IO) {
+        val config = getConfig(context)
+        if (!config.isValid()) return@withContext Result.failure(Exception("GitHub not configured"))
+        try {
+            val url = URL("https://api.github.com/repos/${config.repo}/contents/$path?ref=${config.branch}")
+            val connection = (url.openConnection() as HttpsURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("Authorization", "Bearer ${config.token}")
+                setRequestProperty("Accept", "application/vnd.github.raw+json")
+                setRequestProperty("User-Agent", "WetzelBulk-Android")
+                useCaches = false
+                connectTimeout = 12000
+                readTimeout = 12000
+            }
+            val code = connection.responseCode
+            if (code == 200) Result.success(readStream(connection.inputStream))
+            else Result.failure(Exception("HTTP $code: ${parseGitHubError(readStream(connection.errorStream))}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private suspend fun getFileSha(
         repo: String,
         branch: String,
@@ -308,6 +331,8 @@ object GitSyncManager {
                 put("startTime", session.startTime)
                 put("endTime", session.endTime)
                 put("bodyWeight", session.bodyWeight)
+                // Added in v2.1: the coach note that was current when this workout was finished
+                session.coachNoteId?.let { put("coachNoteId", it) }
             }
 
             val logs = dao.getSetLogsForSession(session.sessionId)

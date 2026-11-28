@@ -239,7 +239,9 @@ data class WorkoutSession(
     val dayName: String,
     val startTime: Long,
     val endTime: Long,
-    val bodyWeight: Double = 0.0
+    val bodyWeight: Double = 0.0,
+    // v2.1: id of the coach note (coach/notes.json) that was current when the workout was finished
+    val coachNoteId: String? = null
 )
 
 @Entity(tableName = "set_logs")
@@ -312,7 +314,14 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-@Database(entities = [WorkoutSession::class, SetLog::class, ExerciseNotes::class], version = 3, exportSchema = false)
+// v2.1: remember which coach note was current for each finished workout. Existing rows get NULL.
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE workout_sessions ADD COLUMN coachNoteId TEXT")
+    }
+}
+
+@Database(entities = [WorkoutSession::class, SetLog::class, ExerciseNotes::class], version = 4, exportSchema = false)
 abstract class WetzelBulkDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 
@@ -325,7 +334,7 @@ abstract class WetzelBulkDatabase : RoomDatabase() {
                     WetzelBulkDatabase::class.java,
                     "wetzel_bulk_db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 instance
@@ -616,6 +625,53 @@ class WorkoutViewModel(context: Context) : ViewModel() {
     var isGitSyncing by mutableStateOf(false)
     var showGitSettingsDialog by mutableStateOf(false)
 
+    // P3: Personal trainer notes (coach/notes.json)
+    var coachNotes = mutableStateListOf<CoachNote>()
+    var seenCoachNoteIds by mutableStateOf(CoachNotesStore.loadSeen(context))
+    var showCoachNoteDialog by mutableStateOf(false)
+
+    /** The note the trainer icon shows: note of record in history, else the newest note for today's workout. */
+    val displayedCoachNote: CoachNote?
+        get() {
+            val session = currentHistorySession
+            return if (isHistoryMode && session != null) {
+                coachNoteOfRecord(session.dayName, session.endTime, session.coachNoteId, coachNotes)
+            } else {
+                latestCoachNote(dayNameToWorkoutType(currentDayName), coachNotes)
+            }
+        }
+
+    val displayedWorkoutType: String
+        get() = dayNameToWorkoutType(currentHistorySession?.takeIf { isHistoryMode }?.dayName ?: currentDayName)
+
+    /** Attention state: today's newest note hasn't been opened yet. Never shown while browsing history. */
+    val hasNewCoachNote: Boolean
+        get() = !isHistoryMode && displayedCoachNote?.let { it.id !in seenCoachNoteIds } == true
+
+    fun openCoachNote() {
+        showCoachNoteDialog = true
+        val note = displayedCoachNote
+        if (!isHistoryMode && note != null && note.id !in seenCoachNoteIds) {
+            CoachNotesStore.markSeen(appContext, note.id)
+            seenCoachNoteIds = seenCoachNoteIds + note.id
+        }
+    }
+
+    /** Downloads coach/notes.json; keeps the cached copy when offline or on any error. */
+    fun refreshCoachNotes() {
+        viewModelScopeLaunch {
+            val result = GitSyncManager.fetchTextFile(appContext, CoachNotesStore.PATH)
+            result.onSuccess { json ->
+                val parsed = runCatching { parseCoachNotesJson(json) }.getOrNull()
+                if (parsed != null) {
+                    CoachNotesStore.saveCache(appContext, json)
+                    coachNotes.clear()
+                    coachNotes.addAll(parsed)
+                }
+            }
+        }
+    }
+
     fun triggerGitSync(customNote: String? = null) {
         if (!GitSyncManager.isConfigured(appContext)) return
         viewModelScopeLaunch {
@@ -634,6 +690,8 @@ class WorkoutViewModel(context: Context) : ViewModel() {
     }
 
     init {
+        // Cached notes show immediately; the UI refreshes from GitHub on every ON_RESUME (incl. app open)
+        coachNotes.addAll(CoachNotesStore.loadCached(context))
         initializeSession()
     }
 
@@ -992,7 +1050,9 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                         dateString = dateStr,
                         dayName = currentDayName,
                         startTime = finalStart,
-                        endTime = endTimeEpoch
+                        endTime = endTimeEpoch,
+                        // Note of record: the trainer note that was current for this workout type at finish
+                        coachNoteId = latestCoachNote(dayNameToWorkoutType(finishedDay), coachNotes, endTimeEpoch)?.id
                     )
                 )
 
@@ -1248,7 +1308,7 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                                     Text(text = "Wetzel", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
                                     Text(text = "Bulk", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
                                     Text(
-                                        text = "v2.0",
+                                        text = "v2.1",
                                         fontSize = 9.sp,
                                         color = Color.Gray,
                                         modifier = Modifier.padding(start = 2.dp, bottom = 1.dp)
@@ -1337,7 +1397,7 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                 // Compact Time Travel Tape Deck Bar
                 Surface(
                     color = if (viewModel.isHistoryMode) Color(0xFFFFFBEB) else Color(0xFFF3F4F6),
-                    modifier = Modifier.fillMaxWidth().height(28.dp)
+                    modifier = Modifier.fillMaxWidth().height(40.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -1356,16 +1416,25 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                             Text(text = "⏮ Older", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
 
-                        Text(
-                            text = if (viewModel.isHistoryMode) {
-                                "${viewModel.currentHistorySession?.dateString} (${viewModel.currentHistorySession?.dayName})"
-                            } else {
-                                "🔴 LIVE TARGET"
-                            },
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (viewModel.isHistoryMode) Color(0xFFD97706) else Color(0xFF16A34A)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = if (viewModel.isHistoryMode) {
+                                    "${viewModel.currentHistorySession?.dateString} (${viewModel.currentHistorySession?.dayName})"
+                                } else {
+                                    "🔴 LIVE TARGET"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = if (viewModel.isHistoryMode) Color(0xFFD97706) else Color(0xFF16A34A)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            // P3: personal trainer icon
+                            TrainerAvatarButton(
+                                hasNewNote = viewModel.hasNewCoachNote,
+                                hasAnyNote = viewModel.displayedCoachNote != null,
+                                onClick = { viewModel.openCoachNote() }
+                            )
+                        }
 
                         TextButton(
                             onClick = { viewModel.stepNewerInHistory() },
@@ -1435,6 +1504,26 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                 )
             }
         }
+    }
+
+    // P3: Personal trainer note dialog
+    if (viewModel.showCoachNoteDialog) {
+        CoachNoteDialog(
+            note = viewModel.displayedCoachNote,
+            workoutType = viewModel.displayedWorkoutType,
+            isHistory = viewModel.isHistoryMode,
+            onDismiss = { viewModel.showCoachNoteDialog = false }
+        )
+    }
+
+    // Refresh trainer notes whenever the app comes back to the foreground
+    val lifecycleOwner = LocalContext.current as? androidx.lifecycle.LifecycleOwner
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) viewModel.refreshCoachNotes()
+        }
+        lifecycleOwner?.lifecycle?.addObserver(observer)
+        onDispose { lifecycleOwner?.lifecycle?.removeObserver(observer) }
     }
 
     // Finish Workout Safety Modal
