@@ -86,6 +86,85 @@ Engineered around specific compound movements, targeted rep ranges, and rest int
 
 ---
 
+## 📝 Proposed Changes (Backlog — not yet approved)
+Ideas logged for review. Nothing here is implemented until we decide which items to build.
+
+> **Data protection (applies to every item):** the months of history in this repo — `data/` (workout SQLite + `workouts.json`) and `food-log/` (food logs, `weight-calories.csv`) — must never be deleted or rewritten. Changes are additive only. On-phone app data is expendable.
+
+### P1. Workout Program Update (Nov 2026)
+Applies to **workouts going forward only**. Past workouts must still show exactly what was done, both in the app's history (`⏮ Older`) and in the workout database / JSON export.
+
+**Implementation notes**
+- Keep every `exerciseLabel` string exactly as it is today (e.g. `Inc. Press`, `Rope Push`, `Lat Pull`). History, pre-fill ("LIVE TARGET") and the JSON export all key on these.
+- Exercise notes are stored by block title (`exercise_notes.blockTitle`). Where a block title changes, **copy** the existing notes to the new title (keep the old entry so history replay still shows them).
+- New exercise on Legs Day: `Lat. Raise`. Its pre-fill must come from the last **Legs Day** `Lat. Raise`, not the Push Day one (pre-fill must be per day + label).
+- Rotation unchanged: rolling Push → Legs → Pull → Cardio.
+- A superset's rest timer runs after each completed pair (A then B).
+
+**PUSH DAY**
+| Block | Exercise (label) | Sets | Reps | Rest |
+|---|---|---|---|---|
+| Incline Press (4 Sets) | Inc. Press | 4 | 8–12 | 120 s |
+| Flat Press (3 Sets) | Flat Press | 3 | 8–12 | 120 s |
+| Superset: DB Fly / Rope Pushdown (NEW pairing) | DB Fly | 3 | 10–15 | 75 s |
+| | Rope Push | 3 | 8–15 | |
+| Superset: Lateral Raise / Skull Crusher (NEW pairing) | Lat. Raise | 3 | 12–20 | 75 s |
+| | Skull Crush | 3 | 10–15 | |
+
+**LEGS DAY**
+| Block | Exercise (label) | Sets | Reps | Rest |
+|---|---|---|---|---|
+| Leg Press (4 Sets) | Leg Press | 4 | 8–12 | 120 s |
+| Romanian Dead Lift (3 Sets) | RDL | 3 | 8–12 | 120 s |
+| Superset: Calf Raise / Lateral Raise (NEW block) | Calf Raise | 3 | 12–20 | 90 s (was 60) |
+| | Lat. Raise (NEW) | 3 | 12–20 | |
+| Superset: Crunch / Back Extension | Crunch | 2 | 10–15 | 60 s |
+| | Back Ext. | 2 | 10–15 | |
+
+**PULL DAY**
+| Block | Exercise (label) | Sets | Reps | Rest |
+|---|---|---|---|---|
+| Lat Pulldown (4 Sets) | Lat Pull | 4 | 8–12 | 120 s |
+| Seated Cable Row - V-Grip (4 Sets) | Cable Row | 4 | 8–12 | 120 s |
+| Superset: Straight-Arm Pulldown / Incline DB Curl (NEW pairing) | Pulldown | 3 | 10–15 | 75 s |
+| | Inc. Curl | 3 | 8–12 | |
+| Superset: Face Pull / Hammer Curl (NEW pairing) | Face Pull | 3 | 12–20 | 75 s |
+| | Hammer | 3 | 8–12 | |
+
+**CARDIO DAY**
+- Incline treadmill walk: 15% incline, ~2.5 mph, ~35 min (unchanged).
+
+**Starting loads for the next session of each day (one-time pre-fill override)**
+- Push: Flat Press 50 (all sets), DB Fly 35. Everything else as last logged.
+- Legs: Leg Press 18. Lat. Raise 20 (new). Everything else as last logged.
+- Pull: Lat Pull 15, Pulldown 6, Face Pull 6, Hammer 35. Everything else as last logged.
+
+### P2. Remove the Body Weight Feature
+- Remove the daily body weight bar (`−` / `+`, direct-entry dialog, pre-population) and body weight from the Finish Workout summary.
+- Body weight is now tracked in `food-log/weight-calories.csv` via Claude chat.
+- **Keep** the existing `bodyWeight` column and its historical values in `workout_sessions`, the SQLite backup and `workouts.json` — removal is UI-only; no data is dropped.
+
+### P3. Personal Trainer Notes from Claude
+A Claude chat or Claude Agent analyzes results and leaves a note for a specific upcoming workout (e.g. "Move the incline press up one plate"); the app shows it.
+- **Source of truth:** a file in this GitHub repo that Claude writes to and the app reads (e.g. `coach/notes.json`). Append-only: Claude adds new notes and never edits or deletes old ones, so the full note history is kept.
+- **Targeting by workout type, never by date:** each note names one of `PUSH`, `LEGS`, `PULL`, `CARDIO` and gets a timestamp from when Claude wrote it.
+- **Notes are never dismissed.** The most recent note for a workout type stays the "current" note until Claude writes a newer one for that type.
+- **Trainer icon (always on screen):**
+  - **New-note state:** when there's a note for today's workout type that I haven't opened yet, the icon looks different (attention state) so I notice it.
+  - **First tap:** shows the note and the icon goes back to its normal state for good (until another new note arrives for that type). "Seen" is tracked on the phone.
+  - **Later taps:** always show the most recent note for that workout type.
+  - **No new note:** the icon stays normal, and tapping it still shows the most recent note for that workout type.
+- **History (`⏮ Older`):** the icon shows the note of record for that past workout: the latest note for that workout type that existed when the workout was done. The note ID should be saved with each finished session so this stays exact.
+- **Fetching:** the app checks GitHub for new notes when it opens (signal at the gym is reliable). If offline, it uses the last notes it downloaded.
+- Avatar: an illustrated female personal-trainer character (not a real person's photo).
+
+### P4. Bug: History Replay Shows 120 s Rest on Every Exercise
+- **Symptom:** browsing past workouts with `⏮ Older` shows `⏱ 120s` on every card.
+- **Cause:** `loadHistoricalSessionReplay()` rebuilds blocks from `set_logs` without a rest value, so every block falls back to the 120 s default. Rest isn't stored in `set_logs`.
+- **Fix:** show the rest time that was intended for that block when the workout happened. Old workouts use the routine that was in effect at that date (before vs. after P1); new workouts should store rest with the set so history stays exact.
+
+---
+
 ## ✅ Completed in v1.9
 1. **Lat Pulldown vs. Straight-Arm Pulldown Disambiguation:** Hardened `getCanonicalExercise()` and `isLabelMatch()` so that vertical Lat Pulldowns (`Lat Pull`) and isolation Straight-Arm Pulldowns (`Pulldown`) resolve to distinct canonical exercise families (`LAT_PULLDOWN` vs `STRAIGHT_ARM_PULLDOWN`). Prevents reverse-chronological set matching from mistakenly populating compound Lat Pulldowns with accessory Straight-Arm Pulldown weights. Added comprehensive unit tests in `ExerciseMatchingTest.kt`.
 
