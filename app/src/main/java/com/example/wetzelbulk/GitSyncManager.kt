@@ -320,6 +320,8 @@ object GitSyncManager {
                     put("setNum", log.setNum)
                     put("weightAchieved", log.weightAchieved)
                     put("repsAchieved", log.repsAchieved)
+                    // Added in v2.0; omitted for sets logged before rest was recorded
+                    if (log.restSeconds >= 0) put("restSeconds", log.restSeconds)
                 }
                 logsArray.put(logObj)
             }

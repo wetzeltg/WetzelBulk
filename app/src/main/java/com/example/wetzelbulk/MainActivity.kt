@@ -250,7 +250,9 @@ data class SetLog(
     val exerciseLabel: String,
     val setNum: Int,
     val weightAchieved: Double,
-    val repsAchieved: Int
+    val repsAchieved: Int,
+    // Intended rest (seconds) for this set at the time it was logged. -1 = not recorded (logged before v2.0).
+    @ColumnInfo(defaultValue = "-1") val restSeconds: Int = -1
 )
 
 @Entity(tableName = "exercise_notes")
@@ -270,8 +272,6 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions ORDER BY endTime DESC LIMIT 1")
     suspend fun getLastSession(): WorkoutSession?
 
-    @Query("SELECT bodyWeight FROM workout_sessions WHERE bodyWeight > 0.0 ORDER BY endTime DESC LIMIT 1")
-    suspend fun getLastRecordedBodyWeight(): Double?
 
     @Query("SELECT * FROM exercise_notes WHERE blockTitle = :title")
     suspend fun getNotesForBlock(title: String): ExerciseNotes?
@@ -293,6 +293,10 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM exercise_notes")
     suspend fun getAllNotes(): List<ExerciseNotes>
+
+    // Pre-fill source: only sets logged on the same workout day, newest first
+    @Query("SELECT l.* FROM set_logs l JOIN workout_sessions s ON s.sessionId = l.sessionId WHERE s.dayName = :dayName ORDER BY l.logId DESC")
+    suspend fun getRecentSetLogsForDay(dayName: String): List<SetLog>
 }
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -301,7 +305,14 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-@Database(entities = [WorkoutSession::class, SetLog::class, ExerciseNotes::class], version = 2, exportSchema = false)
+// v2.0: record the intended rest with each logged set. Existing rows get -1 (not recorded) — no history is altered.
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE set_logs ADD COLUMN restSeconds INTEGER NOT NULL DEFAULT -1")
+    }
+}
+
+@Database(entities = [WorkoutSession::class, SetLog::class, ExerciseNotes::class], version = 3, exportSchema = false)
 abstract class WetzelBulkDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 
@@ -314,7 +325,7 @@ abstract class WetzelBulkDatabase : RoomDatabase() {
                     WetzelBulkDatabase::class.java,
                     "wetzel_bulk_db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance
@@ -500,6 +511,82 @@ fun getExerciseRepRange(label: String): Pair<Int, Int> {
     }
 }
 
+/**
+ * Nov 2026 program: blocks whose pairing changed. Their notes are built once by COPYING the notes of the
+ * old blocks that held these exercises (old entries are kept so history replay still shows them).
+ */
+fun getMergedNotesSources(blockTitle: String): List<String> {
+    return when (blockTitle) {
+        "Superset: DB Fly / Rope Pushdown" ->
+            listOf("Superset: DB Fly / DB Lateral Raise", "Superset: Rope Pushdown / Skull Crusher")
+        "Superset: Lateral Raise / Skull Crusher" ->
+            listOf("Superset: DB Fly / DB Lateral Raise", "Superset: Rope Pushdown / Skull Crusher")
+        "Superset: Calf Raise / Lateral Raise" ->
+            listOf("Leg Press Calf Raise (3 Sets)", "Superset: DB Fly / DB Lateral Raise")
+        "Superset: Straight-Arm Pulldown / Incline DB Curl" ->
+            listOf("Superset: Straight-Arm Pulldown / Face Pull", "Superset: Incline DB Curl / Hammer Curl")
+        "Superset: Face Pull / Hammer Curl" ->
+            listOf("Superset: Straight-Arm Pulldown / Face Pull", "Superset: Incline DB Curl / Hammer Curl")
+        else -> emptyList()
+    }
+}
+
+/** Combines the non-blank notes of the source blocks, labelling each with where it came from. */
+fun mergeCopiedNotes(sources: List<Pair<String, String>>): String {
+    val parts = sources.filter { it.second.isNotBlank() }
+    if (parts.isEmpty()) return ""
+    if (parts.size == 1) return parts.first().second
+    return parts.joinToString("\n\n") { (title, text) -> "[from $title]\n$text" }
+}
+
+/**
+ * Intended rest for blocks logged before v2.0, when rest wasn't stored with each set.
+ * Values are the v1.x routine (Sept–Nov 2026). Returns null for older block titles whose
+ * intended rest is unknown, so no badge is shown rather than a wrong number.
+ */
+fun getLegacyBlockRestSeconds(blockTitle: String): Int? {
+    return when (blockTitle) {
+        "Incline Press (4 Sets)", "Flat Press (3 Sets)",
+        "Leg Press (4 Sets)", "Romanian Dead Lift (3 Sets)",
+        "Lat Pulldown (4 Sets)", "Seated Cable Row - V-Grip (4 Sets)" -> 120
+        "Superset: DB Fly / DB Lateral Raise", "Superset: Rope Pushdown / Skull Crusher",
+        "Superset: Incline DB Curl / Hammer Curl" -> 75
+        "Leg Press Calf Raise (3 Sets)", "Superset: Crunch / Back Extension",
+        "Superset: Back Extension / Crunch", "Superset: Straight-Arm Pulldown / Face Pull" -> 60
+        "Treadmill Cardio", "Treadmill" -> 0
+        else -> null
+    }
+}
+
+/** Block rest badge for a replayed workout: recorded rest if present, otherwise the legacy table. 0 = no badge. */
+fun getHistoricalBlockRestSeconds(blockTitle: String, logs: List<SetLog>): Int {
+    val recorded = logs.map { it.restSeconds }.filter { it >= 0 }
+    if (recorded.isNotEmpty()) return recorded.max()
+    return getLegacyBlockRestSeconds(blockTitle) ?: 0
+}
+
+/**
+ * Pre-fill: find the most recent log for this label (same set number preferred).
+ * [dayLogs] must already be limited to the same workout day and sorted newest first,
+ * so e.g. Legs Day "Lat. Raise" never inherits the Push Day weight.
+ */
+fun findPrefillLog(label: String, setNum: Int, dayLogs: List<SetLog>): SetLog? {
+    return dayLogs.firstOrNull { it.setNum == setNum && isLabelMatch(label, it.exerciseLabel) }
+        ?: dayLogs.firstOrNull { isLabelMatch(label, it.exerciseLabel) }
+}
+
+/** Nov 2026 program: one-time starting loads for the next session of each day (label -> weight, all sets). */
+const val PROGRAM_NOV2026_OVERRIDE_KEY = "program_nov2026_override_done_"
+
+fun getProgramStartingLoads(dayName: String): Map<String, Double> {
+    return when (dayName) {
+        "PUSH DAY" -> mapOf("Flat Press" to 50.0, "DB Fly" to 35.0)
+        "LEGS DAY" -> mapOf("Leg Press" to 18.0, "Lat. Raise" to 20.0)
+        "PULL DAY" -> mapOf("Lat Pull" to 15.0, "Pulldown" to 6.0, "Face Pull" to 6.0, "Hammer" to 35.0)
+        else -> emptyMap()
+    }
+}
+
 class WorkoutViewModel(context: Context) : ViewModel() {
     private val db = WetzelBulkDatabase.getDatabase(context)
     private val dao = db.workoutDao()
@@ -509,8 +596,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
     var currentDayIndex by mutableStateOf(0)
     val currentDayName get() = cycle[currentDayIndex]
 
-    var bodyWeight by mutableStateOf(185.0)
-
     var activeBlocks = mutableStateListOf<WorkoutBlockState>()
     var sessionStartTime: Long = 0
     var focusedSetInstance by mutableStateOf<LoggableSetState?>(null)
@@ -518,7 +603,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
     // Live Workout In-Memory Preservation (Immunity against history navigation corruption)
     private var liveBlocksBackup: List<WorkoutBlockState>? = null
     private var liveDayIndexBackup: Int? = null
-    private var liveBodyWeightBackup: Double? = null
     private var liveSessionStartTimeBackup: Long? = null
 
     // STAGE 3 STATE REGISTRY: Tape Deck Time Travel Parameters
@@ -561,7 +645,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
             if (isSessionActive) {
                 currentDayIndex = prefs.getInt("active_day_index", 0)
                 sessionStartTime = prefs.getLong("active_session_start_time", 0L)
-                bodyWeight = prefs.getFloat("active_body_weight", 185.0f).toDouble()
                 loadActiveDayRoutine(restoreFromPrefs = true)
             } else {
                 val lastSession = withContext(Dispatchers.IO) { dao.getLastSession() }
@@ -588,17 +671,18 @@ class WorkoutViewModel(context: Context) : ViewModel() {
             val prefs = appContext.getSharedPreferences("WetzelBulkPrefs", Context.MODE_PRIVATE)
 
             withContext(Dispatchers.IO) {
-                val lastWeight = dao.getLastRecordedBodyWeight() ?: 185.0
-                withContext(Dispatchers.Main) {
-                    if (restoreFromPrefs) {
-                        bodyWeight = prefs.getFloat("active_body_weight", lastWeight.toFloat()).toDouble()
-                    } else {
-                        bodyWeight = lastWeight
-                    }
-                }
-
                 baseTemplate.forEach { block ->
                     var savedNotes = dao.getNotesForBlock(block.title)
+                    // Nov 2026 program: a re-paired superset gets a one-time copy of its old blocks' notes
+                    val mergeSources = getMergedNotesSources(block.title)
+                    if (savedNotes == null && mergeSources.isNotEmpty()) {
+                        val merged = mergeCopiedNotes(mergeSources.map { src ->
+                            src to (dao.getNotesForBlock(src)?.notesText ?: "")
+                        })
+                        val created = ExerciseNotes(block.title, merged)
+                        dao.saveNotes(created)
+                        savedNotes = created
+                    }
                     if (savedNotes == null || savedNotes.notesText.isBlank()) {
                         for (alias in getNotesAliases(block.title)) {
                             val aliasNotes = dao.getNotesForBlock(alias)
@@ -614,20 +698,22 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                     }
                 }
 
-                val allRecentLogs = dao.getAllRecentSetLogs()
+                // Pre-fill is per day + label (Legs "Lat. Raise" must not inherit Push "Lat. Raise")
+                val dayLogs = dao.getRecentSetLogsForDay(dayName)
+                val startingLoads =
+                    if (prefs.getBoolean(PROGRAM_NOV2026_OVERRIDE_KEY + dayName, false)) emptyMap()
+                    else getProgramStartingLoads(dayName)
                 baseTemplate.forEachIndexed { bIdx, block ->
                     block.sets.forEachIndexed { sIdx, stateSet ->
-                        val matchingLog = allRecentLogs.firstOrNull { log ->
-                            log.setNum == stateSet.setNum && isLabelMatch(stateSet.label, log.exerciseLabel)
-                        } ?: allRecentLogs.firstOrNull { log ->
-                            isLabelMatch(stateSet.label, log.exerciseLabel)
-                        }
+                        val matchingLog = findPrefillLog(stateSet.label, stateSet.setNum, dayLogs)
                         if (matchingLog != null) {
                             stateSet.weight = matchingLog.weightAchieved
                             stateSet.reps = matchingLog.repsAchieved
                             stateSet.baselineWeight = matchingLog.weightAchieved
                             stateSet.baselineReps = matchingLog.repsAchieved
                         }
+                        // One-time starting load for the first session of this day on the new program
+                        startingLoads[stateSet.label]?.let { stateSet.weight = it }
 
                         if (restoreFromPrefs) {
                             val isSessionActive = prefs.getBoolean("is_session_active", false)
@@ -682,7 +768,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                 )
             }
             liveDayIndexBackup = currentDayIndex
-            liveBodyWeightBackup = bodyWeight
             liveSessionStartTimeBackup = sessionStartTime
         }
 
@@ -692,8 +777,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
         stopRestTimer()
 
         viewModelScopeLaunch {
-            bodyWeight = targetSession.bodyWeight
-
             val targetLogs = withContext(Dispatchers.IO) {
                 dao.getSetLogsForSession(targetSession.sessionId)
             }
@@ -704,6 +787,7 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                 val groupedLogs = targetLogs.groupBy { it.exerciseBlockTitle }
                 groupedLogs.forEach { (blockTitle, logs) ->
                     val savedNotes = dao.getNotesForBlock(blockTitle)?.notesText ?: ""
+                    val blockRest = getHistoricalBlockRestSeconds(blockTitle, logs)
                     val sets = logs.map { log ->
                         val (defaultMin, defaultMax) = getExerciseRepRange(log.exerciseLabel)
                         LoggableSetState(
@@ -715,12 +799,13 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                             baselineWeight = log.weightAchieved,
                             baselineReps = log.repsAchieved,
                             minReps = defaultMin,
-                            maxReps = defaultMax
+                            maxReps = defaultMax,
+                            restSeconds = if (log.restSeconds >= 0) log.restSeconds else blockRest
                         ).apply {
                             isCompleted = true
                         }
                     }
-                    historyBlocks.add(WorkoutBlockState(blockTitle, sets, savedNotes))
+                    historyBlocks.add(WorkoutBlockState(blockTitle, sets, savedNotes, defaultRestSeconds = blockRest))
                 }
             }
 
@@ -768,7 +853,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
         val backup = liveBlocksBackup
         if (backup != null) {
             currentDayIndex = liveDayIndexBackup ?: currentDayIndex
-            bodyWeight = liveBodyWeightBackup ?: bodyWeight
             sessionStartTime = liveSessionStartTimeBackup ?: sessionStartTime
             activeBlocks.clear()
             activeBlocks.addAll(backup)
@@ -801,7 +885,6 @@ class WorkoutViewModel(context: Context) : ViewModel() {
             putBoolean("is_session_active", sessionStartTime != 0L)
             putInt("active_day_index", currentDayIndex)
             putLong("active_session_start_time", sessionStartTime)
-            putFloat("active_body_weight", bodyWeight.toFloat())
 
             activeBlocks.forEachIndexed { bIdx, block ->
                 block.sets.forEachIndexed { sIdx, set ->
@@ -876,7 +959,8 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                                 exerciseLabel = set.label,
                                 setNum = set.setNum,
                                 weightAchieved = set.weight,
-                                repsAchieved = set.reps
+                                repsAchieved = set.reps,
+                                restSeconds = set.restSeconds
                             )
                         )
                     }
@@ -897,18 +981,18 @@ class WorkoutViewModel(context: Context) : ViewModel() {
             }
 
             val finishedDay = currentDayName
-            val finishedWeight = bodyWeight
             val finishedDate = dateStr
             val savedSetsCount = logsToSave.size
 
             withContext(Dispatchers.IO) {
+                // Body weight is no longer logged in the app (tracked in food-log/weight-calories.csv);
+                // the column stays, and new sessions store 0.0 = not recorded.
                 val newSessionId = dao.insertSession(
                     WorkoutSession(
                         dateString = dateStr,
                         dayName = currentDayName,
                         startTime = finalStart,
-                        endTime = endTimeEpoch,
-                        bodyWeight = bodyWeight
+                        endTime = endTimeEpoch
                     )
                 )
 
@@ -920,6 +1004,8 @@ class WorkoutViewModel(context: Context) : ViewModel() {
 
             val prefs = appContext.getSharedPreferences("WetzelBulkPrefs", Context.MODE_PRIVATE)
             val editor = prefs.edit()
+            // The one-time Nov 2026 starting loads are used up once this day has been logged
+            editor.putBoolean(PROGRAM_NOV2026_OVERRIDE_KEY + finishedDay, true)
             editor.putBoolean("is_session_active", false)
             editor.remove("active_session_start_time")
             prefs.all.keys.filter { it.startsWith("set_") }.forEach { editor.remove(it) }
@@ -937,7 +1023,7 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                         GitSyncManager.syncDatabaseToGit(
                             context = appContext,
                             database = db,
-                            commitNote = "Workout Finish: $finishedDate - $finishedDay ($savedSetsCount sets, ${finishedWeight} lbs)"
+                            commitNote = "Workout Finish: $finishedDate - $finishedDay ($savedSetsCount sets)"
                         )
                     }
                     isGitSyncing = false
@@ -987,25 +1073,25 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                     defaultRestSeconds = 120
                 ),
                 WorkoutBlockState(
-                    title = "Superset: DB Fly / DB Lateral Raise",
+                    title = "Superset: DB Fly / Rope Pushdown",
                     sets = listOf(
                         LoggableSetState("DB Fly", 1, 30.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Lat. Raise", 1, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 75),
+                        LoggableSetState("Rope Push", 1, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 75),
                         LoggableSetState("DB Fly", 2, 30.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Lat. Raise", 2, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 75),
+                        LoggableSetState("Rope Push", 2, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 75),
                         LoggableSetState("DB Fly", 3, 30.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Lat. Raise", 3, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 75)
+                        LoggableSetState("Rope Push", 3, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 75)
                     ),
                     defaultRestSeconds = 75
                 ),
                 WorkoutBlockState(
-                    title = "Superset: Rope Pushdown / Skull Crusher",
+                    title = "Superset: Lateral Raise / Skull Crusher",
                     sets = listOf(
-                        LoggableSetState("Rope Push", 1, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 1, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Skull Crush", 1, 25.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 75),
-                        LoggableSetState("Rope Push", 2, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 2, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Skull Crush", 2, 25.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 75),
-                        LoggableSetState("Rope Push", 3, 40.0, 12, 2.5, minReps = 8, maxReps = 15, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 3, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Skull Crush", 3, 25.0, 12, 5.0, minReps = 10, maxReps = 15, restSeconds = 75)
                     ),
                     defaultRestSeconds = 75
@@ -1032,13 +1118,16 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                     defaultRestSeconds = 120
                 ),
                 WorkoutBlockState(
-                    title = "Leg Press Calf Raise (3 Sets)",
+                    title = "Superset: Calf Raise / Lateral Raise",
                     sets = listOf(
-                        LoggableSetState("Calf Raise", 1, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 60),
-                        LoggableSetState("Calf Raise", 2, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 60),
-                        LoggableSetState("Calf Raise", 3, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 60)
+                        LoggableSetState("Calf Raise", 1, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 1, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 90),
+                        LoggableSetState("Calf Raise", 2, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 2, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 90),
+                        LoggableSetState("Calf Raise", 3, 100.0, 15, 10.0, minReps = 12, maxReps = 20, restSeconds = 0),
+                        LoggableSetState("Lat. Raise", 3, 15.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 90)
                     ),
-                    defaultRestSeconds = 60
+                    defaultRestSeconds = 90
                 ),
                 WorkoutBlockState(
                     title = "Superset: Crunch / Back Extension",
@@ -1073,25 +1162,25 @@ class WorkoutViewModel(context: Context) : ViewModel() {
                     defaultRestSeconds = 120
                 ),
                 WorkoutBlockState(
-                    title = "Superset: Straight-Arm Pulldown / Face Pull",
+                    title = "Superset: Straight-Arm Pulldown / Incline DB Curl",
                     sets = listOf(
                         LoggableSetState("Pulldown", 1, 30.0, 12, 2.5, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Face Pull", 1, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 60),
+                        LoggableSetState("Inc. Curl", 1, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75),
                         LoggableSetState("Pulldown", 2, 30.0, 12, 2.5, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Face Pull", 2, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 60),
+                        LoggableSetState("Inc. Curl", 2, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75),
                         LoggableSetState("Pulldown", 3, 30.0, 12, 2.5, minReps = 10, maxReps = 15, restSeconds = 0),
-                        LoggableSetState("Face Pull", 3, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 60)
+                        LoggableSetState("Inc. Curl", 3, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75)
                     ),
-                    defaultRestSeconds = 60
+                    defaultRestSeconds = 75
                 ),
                 WorkoutBlockState(
-                    title = "Superset: Incline DB Curl / Hammer Curl",
+                    title = "Superset: Face Pull / Hammer Curl",
                     sets = listOf(
-                        LoggableSetState("Inc. Curl", 1, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 0),
+                        LoggableSetState("Face Pull", 1, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Hammer", 1, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75),
-                        LoggableSetState("Inc. Curl", 2, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 0),
+                        LoggableSetState("Face Pull", 2, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Hammer", 2, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75),
-                        LoggableSetState("Inc. Curl", 3, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 0),
+                        LoggableSetState("Face Pull", 3, 20.0, 15, 2.5, minReps = 12, maxReps = 20, restSeconds = 0),
                         LoggableSetState("Hammer", 3, 25.0, 10, 5.0, minReps = 8, maxReps = 12, restSeconds = 75)
                     ),
                     defaultRestSeconds = 75
@@ -1133,8 +1222,6 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
     var interactiveNotesTextField by remember { mutableStateOf("") }
 
     var showFinishConfirmationDialog by remember { mutableStateOf(false) }
-    var showWeightInputDialog by remember { mutableStateOf(false) }
-    var weightInputString by remember { mutableStateOf("") }
 
     val uriHandler = LocalUriHandler.current
 
@@ -1161,7 +1248,7 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                                     Text(text = "Wetzel", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 16.sp)
                                     Text(text = "Bulk", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, fontSize = 16.sp)
                                     Text(
-                                        text = "v1.9",
+                                        text = "v2.0",
                                         fontSize = 9.sp,
                                         color = Color.Gray,
                                         modifier = Modifier.padding(start = 2.dp, bottom = 1.dp)
@@ -1246,72 +1333,6 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
                 )
-
-                // Compact Body Weight Logging Bar
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.fillMaxWidth().height(30.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "⚖ Body Weight:",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = String.format(Locale.US, "%.1f lbs", viewModel.bodyWeight),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.clickable(enabled = !viewModel.isHistoryMode) {
-                                    weightInputString = String.format(Locale.US, "%.1f", viewModel.bodyWeight)
-                                    showWeightInputDialog = true
-                                }
-                            )
-                            if (!viewModel.isHistoryMode) {
-                                Text(
-                                    text = " (tap to edit)",
-                                    fontSize = 10.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(start = 2.dp)
-                                )
-                            }
-                        }
-
-                        if (!viewModel.isHistoryMode) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                TextButton(
-                                    onClick = {
-                                        viewModel.bodyWeight = maxOf(50.0, (viewModel.bodyWeight - 0.2))
-                                        viewModel.persistActiveSession()
-                                    },
-                                    contentPadding = PaddingValues(0.dp),
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Text("−", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                }
-                                Spacer(modifier = Modifier.width(4.dp))
-                                TextButton(
-                                    onClick = {
-                                        viewModel.bodyWeight += 0.2
-                                        viewModel.persistActiveSession()
-                                    },
-                                    contentPadding = PaddingValues(0.dp),
-                                    modifier = Modifier.size(24.dp)
-                                ) {
-                                    Text("+", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
-                        }
-                    }
-                }
 
                 // Compact Time Travel Tape Deck Bar
                 Surface(
@@ -1416,50 +1437,6 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
         }
     }
 
-    // Direct Weight Input Dialog
-    if (showWeightInputDialog) {
-        AlertDialog(
-            onDismissRequest = { showWeightInputDialog = false },
-            title = { Text("Log Body Weight", fontSize = 14.sp, fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Enter today's body weight (lbs):", fontSize = 12.sp)
-                    OutlinedTextField(
-                        value = weightInputString,
-                        onValueChange = { weightInputString = it },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val parsed = weightInputString.toDoubleOrNull()
-                        if (parsed != null && parsed > 30.0 && parsed < 600.0) {
-                            viewModel.bodyWeight = parsed
-                            viewModel.persistActiveSession()
-                        }
-                        showWeightInputDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text("Save", fontSize = 12.sp)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showWeightInputDialog = false },
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text("Cancel", fontSize = 12.sp)
-                }
-            }
-        )
-    }
-
     // Finish Workout Safety Modal
     if (showFinishConfirmationDialog) {
         val completedSetsCount = viewModel.activeBlocks.flatMap { it.sets }.count { it.isCompleted }
@@ -1475,12 +1452,6 @@ fun WetzelBulkApp(viewModel: WorkoutViewModel = viewModel()) {
                         text = "You logged $completedSetsCount sets across $totalExercisesCount exercises.",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = String.format(Locale.US, "Recorded Body Weight: %.1f lbs", viewModel.bodyWeight),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
                     )
                     if (isGitAuto) {
                         Text(

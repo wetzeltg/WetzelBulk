@@ -24,8 +24,8 @@ android {
         applicationId = "com.example.wetzelbulk"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.9"
+        versionCode = 6
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "GITHUB_DEFAULT_TOKEN", "\"$githubDefaultToken\"")
